@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Arbeitsorganisation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <section class="board">
+      <header class="board-header">
+        <div>
+          <p class="eyebrow" data-i18n="boardEyebrow">DEIN FOKUS-BOARD</p>
+          <h1 data-i18n="appTitle">Aufgaben-Pinnwand</h1>
+          <p class="subtitle" data-i18n="subtitle">Eine Aufgabe nach der anderen. Du schaffst das.</p>
+        </div>
+        <div class="session-actions">
+          <button class="button button-secondary" id="saveSession" data-i18n="saveSession">Sitzung speichern</button>
+          <button class="button button-secondary" id="loadSession" data-i18n="loadSession">Sitzung laden</button>
+          <button class="button button-secondary language-switch" id="languageToggle" type="button" aria-label="Sprache wechseln">English</button>
+          <input id="fileInput" type="file" accept=".json,application/json" hidden>
+        </div>
+      </header>
+
+      <div class="board-heading">
+        <div>
+          <h2 data-i18n="yourTasks">Deine Aufgaben</h2>
+          <p id="taskCount">0 Karten</p>
+        </div>
+        <button class="button button-primary" id="addTaskButton" data-i18n="addTask">＋ Aufgabe hinzufügen</button>
+      </div>
+
+      <form class="task-form" id="taskForm" hidden>
+        <label for="taskTitleInput" data-i18n="taskTitle">Aufgabentitel</label>
+        <input id="taskTitleInput" type="text" maxlength="100"
+               placeholder="z. B. Angebot fertigstellen" data-i18n-placeholder="taskPlaceholder" required>
+
+        <label for="taskPriorityInput" data-i18n="priority">Priorität</label>
+        <select id="taskPriorityInput">
+          <option value="normal" data-i18n="normal">Normal</option>
+          <option value="important" data-i18n="important">Wichtig</option>
+          <option value="pause" data-i18n="pause">Pause</option>
+        </select>
+
+        <div class="form-actions">
+          <button class="button button-primary" type="submit" data-i18n="createCard">Karte hinzufügen</button>
+          <button class="button button-secondary" type="button" id="cancelAddButton" data-i18n="cancel">Abbrechen</button>
+        </div>
+      </form>
+
+      <div class="task-grid" id="taskGrid" aria-live="polite"></div>
+      <p class="empty-state" id="emptyState">
+        <span data-i18n="emptyState">Noch keine Aufgaben auf deiner Pinnwand. Füge deine erste Karte hinzu.</span>
+      </p>
+    </section>
+
+    <aside class="timer-panel" aria-label="Fokus-Timer" data-i18n-aria="focusTimer">
+      <p class="eyebrow" data-i18n="focusTimer">FOKUS-TIMER</p>
+
+      <div class="timer-face" id="timerFace" aria-label="Timer: 5 Minuten">
+        <div class="dial-ticks" aria-hidden="true"></div>
+        <div class="timer-center">
+          <span class="timer-time" id="timerDisplay">05:00</span>
+        <span class="timer-status" id="timerStatus" data-i18n="ready">BEREIT</span>
+        </div>
+      </div>
+
+      <label class="duration-control" for="durationInput">
+        <span data-i18n="duration">Dauer in Minuten</span>
+        <input id="durationInput" type="number" min="1" max="180" value="5">
+      </label>
+
+      <button class="button button-primary timer-button" id="startPauseButton" data-i18n="startTimer">Timer starten</button>
+      <button class="button button-secondary timer-button" id="resetButton" data-i18n="reset">Zurücksetzen</button>
+      <button class="button button-accent timer-button" id="nextTaskButton" data-i18n="nextTask" hidden>
+        Nächste zufällige Aufgabe
+      </button>
+
+      <div class="focus-card">
+        <span class="focus-label" data-i18n="focusNow">JETZT IM FOKUS</span>
+        <h2 id="currentTaskTitle">Noch keine Aufgabe</h2>
+        <span class="priority-badge" id="currentTaskPriority"></span>
+      </div>
+
+      <p class="sound-note" data-i18n="soundNote">Nach Ablauf des Timers erklingt ein Signalton.</p>
+    </aside>
+  </main>
+
+  <script>
+    (() => {
+      const STORAGE_KEY = "arbeitsorganisation-session-v1";
+      const COLORS = ["lavender", "mint", "peach", "blue", "yellow"];
+      const LANGUAGE_KEY = "arbeitsorganisation-language-v1";
+      const STRINGS = {
+        de: {
+          boardEyebrow: "DEIN FOKUS-BOARD", appTitle: "Aufgaben-Pinnwand", subtitle: "Eine Aufgabe nach der anderen. Du schaffst das.",
+          saveSession: "Sitzung speichern", loadSession: "Sitzung laden", yourTasks: "Deine Aufgaben", addTask: "＋ Aufgabe hinzufügen",
+          taskTitle: "Aufgabentitel", taskPlaceholder: "z. B. Angebot fertigstellen", priority: "Priorität", normal: "Normal", important: "Wichtig", pause: "Pause",
+          createCard: "Karte hinzufügen", cancel: "Abbrechen", emptyState: "Noch keine Aufgaben auf deiner Pinnwand. Füge deine erste Karte hinzu.",
+          focusTimer: "FOKUS-TIMER", ready: "BEREIT", duration: "Dauer in Minuten", startTimer: "Timer starten", reset: "Zurücksetzen",
+          nextTask: "Nächste zufällige Aufgabe", focusNow: "JETZT IM FOKUS", noTask: "Noch keine Aufgabe", soundNote: "Nach Ablauf des Timers erklingt ein Signalton.",
+          card: "Karte", cards: "Karten", titleEdit: "Titel anklicken und bearbeiten", splitFirst: "Titel des ersten Teils", splitSecond: "Titel des zweiten Teils",
+          confirmEnter: "Mit Enter bestätigen", done: "Erledigt", doneTop: "Oberste Karte „{title}“ erledigen", priorityFor: "Priorität: {title}",
+          moveUp: "Nach oben verschieben", moveDown: "Nach unten verschieben", timeUp: "ZEIT UM", paused: "PAUSIERT", running: "LÄUFT",
+          continue: "Weiter", pauseTimer: "Pausieren", addTaskFirst: "Füge zuerst mindestens eine Aufgabe hinzu.", fileLoadError: "Die Datei konnte nicht geladen werden. Bitte wähle eine gültige Sitzungsdatei.",
+          timerAria: "Timer: {time}", switchLanguage: "Sprache wechseln"
+        },
+        en: {
+          boardEyebrow: "YOUR FOCUS BOARD", appTitle: "Task Pinboard", subtitle: "One task at a time. You’ve got this.",
+          saveSession: "Save session", loadSession: "Load session", yourTasks: "Your tasks", addTask: "＋ Add task",
+          taskTitle: "Task title", taskPlaceholder: "e.g. Finish the proposal", priority: "Priority", normal: "Normal", important: "Important", pause: "Break",
+          createCard: "Add card", cancel: "Cancel", emptyState: "No tasks on your pinboard yet. Add your first card.",
+          focusTimer: "FOCUS TIMER", ready: "READY", duration: "Duration in minutes", startTimer: "Start timer", reset: "Reset",
+          nextTask: "Next random task", focusNow: "NOW IN FOCUS", noTask: "No task selected", soundNote: "An alert will sound when the timer ends.",
+          card: "card", cards: "cards", titleEdit: "Click to edit title", splitFirst: "Title of the first part", splitSecond: "Title of the second part",
+          confirmEnter: "Press Enter to confirm", done: "Done", doneTop: "Mark top card “{title}” as done", priorityFor: "Priority: {title}",
+          moveUp: "Move up", moveDown: "Move down", timeUp: "TIME’S UP", paused: "PAUSED", running: "RUNNING",
+          continue: "Continue", pauseTimer: "Pause", addTaskFirst: "Add at least one task first.", fileLoadError: "The file could not be loaded. Choose a valid session file.",
+          timerAria: "Timer: {time}", switchLanguage: "Switch language"
+        }
+      };
+      let language = "de";
+      try { language = localStorage.getItem(LANGUAGE_KEY) === "en" ? "en" : "de"; } catch {}
+      function t(key, values = {}) {
+        return Object.entries(values).reduce((value, [name, replacement]) => value.replace(`{${name}}`, replacement), STRINGS[language][key] || key);
+      }
+      const PRIORITIES = {
+        important: { labelKey: "important", className: "priority-important" },
+        normal: { labelKey: "normal", className: "priority-normal" },
+        pause: { labelKey: "pause", className: "priority-pause" }
+      };
+
+      const el = {
+        timerFace: document.getElementById("timerFace"),
+        dialTicks: document.querySelector(".dial-ticks"),
+        timerDisplay: document.getElementById("timerDisplay"),
+        timerStatus: document.getElementById("timerStatus"),
+        durationInput: document.getElementById("durationInput"),
+        startPauseButton: document.getElementById("startPauseButton"),
+        resetButton: document.getElementById("resetButton"),
+        currentTaskTitle: document.getElementById("currentTaskTitle"),
+        currentTaskPriority: document.getElementById("currentTaskPriority"),
+        nextTaskButton: document.getElementById("nextTaskButton"),
+        taskGrid: document.getElementById("taskGrid"),
+        taskCount: document.getElementById("taskCount"),
+        emptyState: document.getElementById("emptyState"),
+        taskForm: document.getElementById("taskForm"),
+        taskTitleInput: document.getElementById("taskTitleInput"),
+        taskPriorityInput: document.getElementById("taskPriorityInput"),
+        fileInput: document.getElementById("fileInput")
+      };
+
+      let tasks = [];
+      let currentTaskId = null;
+      let remainingSeconds = 300;
+      let totalSeconds = 300;
+      let intervalId = null;
+      let timerRunning = false;
+      let timerFinished = false;
+      let audioContext = null;
+      const expandedStacks = new Set();
+      let activeSplit = null;
+
+      function saveToBrowser() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            tasks,
+            currentTaskId,
+            duration: Number(el.durationInput.value) || 5
+          }));
+        } catch (error) {
+          console.warn("Lokales Speichern war nicht möglich.", error);
+        }
+      }
+
+      function loadFromBrowser() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+          if (!saved || !Array.isArray(saved.tasks)) return;
+
+          tasks = saved.tasks
+            .filter(task => task && typeof task.title === "string")
+            .map(task => ({
+              id: typeof task.id === "string" ? task.id : makeId(),
+              title: task.title,
+              priority: PRIORITIES[task.priority] ? task.priority : "normal",
+              color: COLORS.includes(task.color) ? task.color : randomCardColor(),
+              stackId: task.stackId || task.id,
+              stackTitle: typeof task.stackTitle === "string" ? task.stackTitle : null,
+              stackOrder: Number.isFinite(task.stackOrder) ? task.stackOrder : 0
+            }));
+          normalizeStackColors(tasks);
+
+          currentTaskId = saved.currentTaskId || null;
+          const duration = Number(saved.duration);
+          if (Number.isFinite(duration) && duration >= 1 && duration <= 180) {
+            el.durationInput.value = duration;
+          }
+          totalSeconds = Number(el.durationInput.value) * 60;
+          remainingSeconds = totalSeconds;
+          saveToBrowser();
+        } catch (error) {
+          console.warn("Gespeicherte Sitzung konnte nicht geladen werden.", error);
+        }
+      }
+
+      function makeId() {
+        return crypto.randomUUID
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random()}`;
+      }
+
+      function randomCardColor() {
+        return COLORS[Math.floor(Math.random() * COLORS.length)];
+      }
+
+      function normalizeStackColors(taskList) {
+        const stackIds = [...new Set(taskList.map(task => task.stackId || task.id))];
+        stackIds.forEach(stackId => {
+          const group = taskList.filter(task => (task.stackId || task.id) === stackId);
+          const color = group.find(task => COLORS.includes(task.color))?.color || randomCardColor();
+          group.forEach(task => { task.color = color; });
+          const ordered = [...group].sort((a, b) => a.stackOrder - b.stackOrder);
+          const stackTitle = group.find(task => typeof task.stackTitle === "string" && task.stackTitle.trim())?.stackTitle
+            || (group.length > 1 ? ordered[0].title : null);
+          if (stackTitle) group.forEach(task => { task.stackTitle = stackTitle; });
+        });
+      }
+
+      function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainder = seconds % 60;
+        return `${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
+      }
+
+      function updateTimerDisplay() {
+        el.timerDisplay.textContent = formatTime(remainingSeconds);
+        el.timerFace.setAttribute("aria-label", t("timerAria", { time: formatTime(remainingSeconds) }));
+
+        if (remainingSeconds % 5 === 0 || remainingSeconds === totalSeconds) {
+          const remainingMinutes = Math.min(60, remainingSeconds / 60);
+          const ringColor = remainingSeconds <= 5 * 60 ? "#e6533e"
+            : remainingSeconds <= 10 * 60 ? "#f1c936" : "#20a955";
+          el.timerFace.style.setProperty("--arc-angle", `${remainingMinutes / 60 * 360}deg`);
+          el.timerFace.style.setProperty("--ring-color", ringColor);
+        }
+      }
+
+      function renderDialTicks() {
+        const svgNS = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(svgNS, "svg");
+        svg.setAttribute("viewBox", "0 0 100 100");
+        svg.setAttribute("aria-hidden", "true");
+        for (let minute = 0; minute < 60; minute += 1) {
+          const major = minute % 5 === 0;
+          const angle = (minute * 6 - 90) * Math.PI / 180;
+          const outer = 46;
+          const inner = major ? 39 : 42.5;
+          const line = document.createElementNS(svgNS, "line");
+          line.setAttribute("x1", String(50 + Math.cos(angle) * inner));
+          line.setAttribute("y1", String(50 + Math.sin(angle) * inner));
+          line.setAttribute("x2", String(50 + Math.cos(angle) * outer));
+          line.setAttribute("y2", String(50 + Math.sin(angle) * outer));
+          line.setAttribute("stroke", "#292929");
+          line.setAttribute("stroke-width", major ? "1.1" : "0.55");
+          line.setAttribute("stroke-linecap", "round");
+          svg.appendChild(line);
+        }
+        el.dialTicks.replaceChildren(svg);
+      }
+
+      function updateCurrentTask() {
+        const task = tasks.find(item => item.id === currentTaskId);
+        el.currentTaskTitle.textContent = task ? task.title : t("noTask");
+
+        el.currentTaskPriority.textContent = task
+          ? t(PRIORITIES[task.priority].labelKey)
+          : "";
+        el.currentTaskPriority.className = task
+          ? `priority-badge ${PRIORITIES[task.priority].className}`
+          : "priority-badge";
+      }
+
+      function updateTimerLabels() {
+        el.timerStatus.textContent = timerFinished ? t("timeUp")
+          : timerRunning ? t("running")
+          : remainingSeconds < totalSeconds ? t("paused") : t("ready");
+        el.startPauseButton.textContent = timerRunning ? t("pauseTimer")
+          : remainingSeconds < totalSeconds && !timerFinished ? t("continue") : t("startTimer");
+      }
+
+      function applyLanguage() {
+        document.documentElement.lang = language;
+        document.title = language === "en" ? "Task Pinboard" : "Arbeitsorganisation";
+        document.querySelectorAll("[data-i18n]").forEach(node => { node.textContent = t(node.dataset.i18n); });
+        document.querySelectorAll("[data-i18n-placeholder]").forEach(node => { node.placeholder = t(node.dataset.i18nPlaceholder); });
+        document.querySelectorAll("[data-i18n-aria]").forEach(node => { node.setAttribute("aria-label", t(node.dataset.i18nAria)); });
+        const languageToggle = document.getElementById("languageToggle");
+        languageToggle.textContent = language === "de" ? "English" : "Deutsch";
+        languageToggle.setAttribute("aria-label", t("switchLanguage"));
+        renderTasks();
+        updateTimerLabels();
+      }
+
+      function createEditableTitle(task) {
+        const heading = document.createElement("h3");
+        heading.className = "editable-task-title";
+        heading.textContent = task.title;
+        heading.title = t("titleEdit");
+        heading.tabIndex = 0;
+        heading.setAttribute("role", "button");
+        const beginEdit = event => {
+          event.stopPropagation();
+          const input = document.createElement("input");
+          input.className = "title-editor"; input.type = "text"; input.maxLength = 100; input.value = task.title;
+          const save = () => { const value = input.value.trim(); if (value) { task.title = value; saveToBrowser(); } renderTasks(); };
+          input.addEventListener("keydown", keyEvent => {
+            if (keyEvent.key === "Enter") { keyEvent.preventDefault(); input.blur(); }
+            if (keyEvent.key === "Escape") { keyEvent.preventDefault(); input.removeEventListener("blur", save); renderTasks(); }
+          });
+          input.addEventListener("blur", save, { once: true });
+          heading.replaceWith(input); input.focus(); input.select();
+        };
+        heading.addEventListener("click", beginEdit);
+        heading.addEventListener("keydown", event => { if (event.key === "Enter" || event.key === " ") beginEdit(event); });
+        return heading;
+      }
+
+      function createEditableStackTitle(stackId, title) {
+        const heading = document.createElement("h3");
+        heading.className = "stack-frame-title";
+        heading.textContent = title;
+        heading.title = t("titleEdit");
+        heading.tabIndex = 0;
+        heading.setAttribute("role", "button");
+        const beginEdit = event => {
+          event.stopPropagation();
+          const input = document.createElement("input");
+          input.className = "stack-title-editor"; input.type = "text"; input.maxLength = 100; input.value = title;
+          const save = () => {
+            const value = input.value.trim();
+            if (value) {
+              tasks.filter(item => (item.stackId || item.id) === stackId).forEach(item => { item.stackTitle = value; });
+              saveToBrowser();
+            }
+            renderTasks();
+          };
+          input.addEventListener("keydown", keyEvent => {
+            if (keyEvent.key === "Enter") { keyEvent.preventDefault(); input.blur(); }
+            if (keyEvent.key === "Escape") { keyEvent.preventDefault(); input.removeEventListener("blur", save); renderTasks(); }
+          });
+          input.addEventListener("blur", save, { once: true });
+          heading.replaceWith(input); input.focus(); input.select();
+        };
+        heading.addEventListener("click", beginEdit);
+        heading.addEventListener("keydown", event => { if (event.key === "Enter" || event.key === " ") beginEdit(event); });
+        return heading;
+      }
+
+      function createSplitEditor(task) {
+        const form = document.createElement("form"); form.className = "inline-split-form";
+        const label = document.createElement("label");
+        label.textContent = activeSplit.step === 1 ? t("splitFirst") : t("splitSecond");
+        const input = document.createElement("input"); input.type = "text"; input.maxLength = 100; input.required = true;
+        input.value = activeSplit.step === 1 ? task.title : `${activeSplit.firstTitle} – Teil 2`;
+        const submit = document.createElement("button"); submit.type = "submit"; submit.textContent = t("confirmEnter");
+        const cancel = document.createElement("button"); cancel.type = "button"; cancel.textContent = t("cancel");
+        cancel.addEventListener("click", () => { activeSplit = null; renderTasks(); });
+        input.addEventListener("keydown", event => { if (event.key === "Escape") { event.preventDefault(); activeSplit = null; renderTasks(); } });
+        form.append(label, input, submit, cancel);
+        form.addEventListener("submit", event => {
+          event.preventDefault(); const value = input.value.trim(); if (!value) return;
+          if (activeSplit.step === 1) { activeSplit = { taskId: task.id, step: 2, firstTitle: value }; renderTasks(); }
+          else { const firstTitle = activeSplit.firstTitle; activeSplit = null; splitTask(task, firstTitle, value); }
+        });
+        requestAnimationFrame(() => input.focus());
+        return form;
+      }
+
+      function renderTasks() {
+        el.taskGrid.replaceChildren();
+        el.taskCount.textContent = `${tasks.length} ${tasks.length === 1 ? t("card") : t("cards")}`;
+        el.emptyState.hidden = tasks.length > 0;
+
+        const stackIds = [...new Set(tasks.map(task => task.stackId || task.id))];
+        stackIds.forEach((stackId, index) => {
+          const stackTasks = tasks.filter(task => (task.stackId || task.id) === stackId).sort((a, b) => a.stackOrder - b.stackOrder);
+          const task = stackTasks[0];
+          const stackColor = task.color || randomCardColor();
+          const stack = document.createElement("section");
+          stack.className = `task-stack${expandedStacks.has(stackId) ? " is-expanded" : ""}`;
+          if (task.id === currentTaskId) stack.classList.add("is-current-stack");
+          const card = document.createElement("article");
+          card.className = `task-card ${stackColor}`;
+          if (task.id === currentTaskId) card.classList.add("is-current");
+
+          const pin = document.createElement("span");
+          pin.className = "pin";
+          pin.setAttribute("aria-hidden", "true");
+
+          const title = createEditableTitle(task);
+
+          const prioritySwitch = document.createElement("select");
+          prioritySwitch.className = `priority-switch ${PRIORITIES[task.priority].className}`;
+          prioritySwitch.setAttribute("aria-label", t("priorityFor", { title: task.title }));
+          Object.entries(PRIORITIES).forEach(([value, priority]) => {
+            const option = document.createElement("option"); option.value = value; option.textContent = t(priority.labelKey);
+            prioritySwitch.appendChild(option);
+          });
+          prioritySwitch.value = task.priority;
+          prioritySwitch.addEventListener("change", () => { task.priority = prioritySwitch.value; renderTasks(); saveToBrowser(); });
+
+          const actions = document.createElement("div");
+          actions.className = "card-actions";
+
+          const splitButton = document.createElement("button"); splitButton.type = "button";
+          splitButton.className = "split-task"; splitButton.textContent = "Split";
+          splitButton.addEventListener("click", () => { activeSplit = { taskId: task.id, step: 1 }; renderTasks(); });
+          const doneButton = document.createElement("button"); doneButton.type = "button"; doneButton.className = "delete-task"; doneButton.textContent = t("done");
+          doneButton.setAttribute("aria-label", t("doneTop", { title: task.title }));
+          doneButton.addEventListener("click", () => deleteTask(task.id)); actions.append(splitButton, doneButton);
+          card.append(pin, title, prioritySwitch, actions); stack.appendChild(card);
+          if (activeSplit && activeSplit.taskId === task.id) stack.appendChild(createSplitEditor(task));
+          if (stackTasks.length > 1) {
+            stack.classList.add("has-stack");
+            const frameTitle = createEditableStackTitle(stackId, task.stackTitle || task.title);
+            stack.appendChild(frameTitle);
+            const depth = document.createElement("span"); depth.className = "stack-depth"; depth.textContent = `${stackTasks.length} ${t("cards")}`; stack.appendChild(depth);
+          }
+          if (expandedStacks.has(stackId) && stackTasks.length > 1) {
+            stackTasks.slice(1).forEach((item, position) => {
+              const lower = document.createElement("article"); lower.className = `task-card stack-lower ${stackColor}`;
+              const lowerTitle = createEditableTitle(item);
+              const reorder = (from, to) => {
+                [stackTasks[from], stackTasks[to]] = [stackTasks[to], stackTasks[from]];
+                stackTasks.forEach((entry, n) => entry.stackOrder = n);
+                tasks = tasks.filter(entry => (entry.stackId || entry.id) !== stackId).concat(stackTasks);
+                renderTasks(); saveToBrowser();
+              };
+              const controls = document.createElement("div"); controls.className = "stack-reorder";
+              const splitLower = document.createElement("button"); splitLower.type = "button"; splitLower.className = "split-task"; splitLower.textContent = "Split";
+              splitLower.addEventListener("click", () => { activeSplit = { taskId: item.id, step: 1 }; renderTasks(); });
+              controls.appendChild(splitLower);
+              { const up = document.createElement("button"); up.type = "button"; up.textContent = "↑"; up.setAttribute("aria-label", t("moveUp")); up.addEventListener("click", () => reorder(position + 1, position)); controls.appendChild(up); }
+              if (position < stackTasks.length - 2) { const down = document.createElement("button"); down.type = "button"; down.textContent = "↓"; down.setAttribute("aria-label", t("moveDown")); down.addEventListener("click", () => reorder(position + 1, position + 2)); controls.appendChild(down); }
+              lower.append(lowerTitle, controls); stack.appendChild(lower);
+              if (activeSplit && activeSplit.taskId === item.id) stack.appendChild(createSplitEditor(item));
+              lower.addEventListener("click", event => {
+                if (event.target.closest("button, input, .editable-task-title")) return;
+                expandedStacks.delete(stackId); renderTasks();
+              });
+            });
+          }
+          stack.dataset.stackId = stackId;
+          card.addEventListener("click", event => {
+            if (event.target.closest("button, select, input, .editable-task-title")) return;
+            if (expandedStacks.has(stackId)) expandedStacks.delete(stackId);
+            else expandedStacks.add(stackId);
+            renderTasks();
+          });
+          el.taskGrid.appendChild(stack);
+        });
+
+        updateCurrentTask();
+      }
+
+      function deleteTask(id) {
+        tasks = tasks.filter(task => task.id !== id);
+        if (currentTaskId === id) currentTaskId = null;
+        renderTasks();
+        saveToBrowser();
+      }
+
+      function splitTask(task, firstTitle, secondTitle) {
+        const stackId = task.stackId || task.id;
+        const stackTasks = tasks.filter(item => (item.stackId || item.id) === stackId).sort((a, b) => a.stackOrder - b.stackOrder);
+        const position = stackTasks.findIndex(item => item.id === task.id);
+        if (position < 0) return;
+        const stackTitle = stackTasks.find(item => typeof item.stackTitle === "string" && item.stackTitle.trim())?.stackTitle || task.title;
+        task.title = firstTitle;
+        stackTasks.splice(position + 1, 0, { id: makeId(), title: secondTitle, priority: task.priority, color: task.color, stackId, stackTitle, stackOrder: 0 });
+        stackTasks.forEach((item, index) => item.stackOrder = index);
+        stackTasks.forEach(item => { item.stackId = stackId; item.stackTitle = stackTitle; });
+        tasks = tasks.filter(item => (item.stackId || item.id) !== stackId).concat(stackTasks);
+        expandedStacks.add(stackId);
+        renderTasks(); saveToBrowser();
+      }
+
+      function chooseRandomTask() {
+        if (tasks.length === 0) return false;
+
+        const available = [...new Set(tasks.map(task => task.stackId || task.id))].map(stackId => tasks.filter(task => (task.stackId || task.id) === stackId).sort((a, b) => a.stackOrder - b.stackOrder)[0]);
+        const important = available.filter(task => task.priority === "important");
+        const others = available.filter(task => task.priority !== "important");
+        let pool;
+
+        if (important.length && others.length) {
+          pool = Math.random() < 0.5 ? important : others;
+        } else {
+          pool = important.length ? important : others;
+        }
+
+        const choices = pool.length > 1
+          ? pool.filter(task => task.id !== currentTaskId)
+          : pool;
+
+        currentTaskId = choices[Math.floor(Math.random() * choices.length)].id;
+        renderTasks();
+        saveToBrowser();
+        return true;
+      }
+
+      function playAlarm() {
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) return;
+
+          audioContext = audioContext || new AudioContextClass();
+          if (audioContext.state === "suspended") audioContext.resume();
+
+          [0, 0.32, 0.64].forEach((offset, index) => {
+            const oscillator = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            const startAt = audioContext.currentTime + offset;
+
+            oscillator.type = "sine";
+            oscillator.frequency.value = index === 1 ? 880 : 660;
+            gain.gain.setValueAtTime(0.0001, startAt);
+            gain.gain.exponentialRampToValueAtTime(0.22, startAt + 0.025);
+            gain.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.22);
+
+            oscillator.connect(gain);
+            gain.connect(audioContext.destination);
+            oscillator.start(startAt);
+            oscillator.stop(startAt + 0.24);
+          });
+        } catch (error) {
+          console.warn("Der Signalton konnte nicht abgespielt werden.", error);
+        }
+      }
+
+      function finishTimer() {
+        clearInterval(intervalId);
+        intervalId = null;
+        timerRunning = false;
+        timerFinished = true;
+        remainingSeconds = 0;
+        updateTimerDisplay();
+        el.timerStatus.textContent = t("timeUp");
+        el.startPauseButton.textContent = t("startTimer");
+        el.nextTaskButton.hidden = false;
+        playAlarm();
+      }
+
+      el.startPauseButton.addEventListener("click", () => {
+        if (timerRunning) {
+          clearInterval(intervalId);
+          intervalId = null;
+          timerRunning = false;
+          el.timerStatus.textContent = t("paused");
+          el.startPauseButton.textContent = t("continue");
+          return;
+        }
+
+        if (!timerFinished) {
+          if (!chooseRandomTask()) {
+            alert(t("addTaskFirst"));
+            return;
+          }
+        }
+
+        if (timerFinished || remainingSeconds <= 0) {
+          totalSeconds = Number(el.durationInput.value) * 60;
+          remainingSeconds = totalSeconds;
+          timerFinished = false;
+          el.nextTaskButton.hidden = true;
+        }
+
+        timerRunning = true;
+        el.timerStatus.textContent = t("running");
+        el.startPauseButton.textContent = t("pauseTimer");
+
+        intervalId = setInterval(() => {
+          remainingSeconds -= 1;
+          updateTimerDisplay();
+          if (remainingSeconds <= 0) finishTimer();
+        }, 1000);
+      });
+
+      el.resetButton.addEventListener("click", () => {
+        clearInterval(intervalId);
+        intervalId = null;
+        timerRunning = false;
+        timerFinished = false;
+        totalSeconds = Number(el.durationInput.value) * 60;
+        remainingSeconds = totalSeconds;
+        el.timerStatus.textContent = t("ready");
+        el.startPauseButton.textContent = t("startTimer");
+        el.nextTaskButton.hidden = true;
+        updateTimerDisplay();
+      });
+
+      el.durationInput.addEventListener("change", () => {
+        const value = Math.min(180, Math.max(1, Number(el.durationInput.value) || 5));
+        el.durationInput.value = value;
+
+        if (!timerRunning) {
+          totalSeconds = value * 60;
+          remainingSeconds = totalSeconds;
+          timerFinished = false;
+          el.timerStatus.textContent = t("ready");
+          el.nextTaskButton.hidden = true;
+          updateTimerDisplay();
+        }
+        saveToBrowser();
+      });
+
+      el.nextTaskButton.addEventListener("click", () => {
+        chooseRandomTask();
+        el.nextTaskButton.hidden = true;
+        timerFinished = false;
+        totalSeconds = Number(el.durationInput.value) * 60;
+        remainingSeconds = totalSeconds;
+        el.timerStatus.textContent = t("ready");
+        updateTimerDisplay();
+      });
+
+      document.getElementById("addTaskButton").addEventListener("click", () => {
+        el.taskForm.hidden = !el.taskForm.hidden;
+        if (!el.taskForm.hidden) el.taskTitleInput.focus();
+      });
+
+      document.getElementById("cancelAddButton").addEventListener("click", () => {
+        el.taskForm.reset();
+        el.taskForm.hidden = true;
+      });
+
+      document.getElementById("languageToggle").addEventListener("click", () => {
+        language = language === "de" ? "en" : "de";
+        try { localStorage.setItem(LANGUAGE_KEY, language); } catch {}
+        applyLanguage();
+        updateTimerDisplay();
+      });
+
+      el.taskForm.addEventListener("submit", event => {
+        event.preventDefault();
+        const title = el.taskTitleInput.value.trim();
+        if (!title) return;
+
+        tasks.push({
+          id: makeId(),
+          title,
+          priority: el.taskPriorityInput.value,
+          color: randomCardColor(),
+          stackId: makeId(), stackOrder: 0
+        });
+
+        el.taskForm.reset();
+        el.taskForm.hidden = true;
+        renderTasks();
+        saveToBrowser();
+      });
+
+      document.getElementById("saveSession").addEventListener("click", () => {
+        const savedAt = new Date();
+        const timestamp =
+          `${savedAt.getFullYear()}${String(savedAt.getMonth() + 1).padStart(2, "0")}` +
+          `${String(savedAt.getDate()).padStart(2, "0")}-` +
+          `${String(savedAt.getHours()).padStart(2, "0")}` +
+          `${String(savedAt.getMinutes()).padStart(2, "0")}` +
+          `${String(savedAt.getSeconds()).padStart(2, "0")}`;
+
+        const session = {
+          version: 1,
+          savedAt: savedAt.toISOString(),
+          tasks,
+          currentTaskId,
+          duration: Number(el.durationInput.value) || 5
+        };
+
+        const blob = new Blob([JSON.stringify(session, null, 2)], {
+          type: "application/json"
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `arbeitsorganisation-${timestamp}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+      });
+
+      document.getElementById("loadSession").addEventListener("click", () => {
+        el.fileInput.click();
+      });
+
+      document.querySelector(".board").addEventListener("click", event => {
+        if (event.target.closest(".task-card, button, form, select, input")) return;
+        if (expandedStacks.size || activeSplit) {
+          expandedStacks.clear(); activeSplit = null; renderTasks();
+        }
+      });
+
+      el.fileInput.addEventListener("change", async event => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        try {
+          const session = JSON.parse(await file.text());
+          if (!session || !Array.isArray(session.tasks)) {
+            throw new Error("Ungültiges Sitzungsformat.");
+          }
+
+          tasks = session.tasks
+            .filter(task => task && typeof task.title === "string")
+            .map(task => ({
+              id: typeof task.id === "string" ? task.id : makeId(),
+              title: task.title,
+              priority: PRIORITIES[task.priority] ? task.priority : "normal",
+              color: COLORS.includes(task.color) ? task.color : randomCardColor(),
+              stackId: task.stackId || task.id,
+              stackTitle: typeof task.stackTitle === "string" ? task.stackTitle : null,
+              stackOrder: Number.isFinite(task.stackOrder) ? task.stackOrder : 0
+            }));
+          normalizeStackColors(tasks);
+
+          currentTaskId = tasks.some(task => task.id === session.currentTaskId)
+            ? session.currentTaskId
+            : null;
+
+          const duration = Number(session.duration);
+          if (Number.isFinite(duration) && duration >= 1 && duration <= 180) {
+            el.durationInput.value = duration;
+          }
+
+          clearInterval(intervalId);
+          intervalId = null;
+          timerRunning = false;
+          timerFinished = false;
+          totalSeconds = Number(el.durationInput.value) * 60;
+          remainingSeconds = totalSeconds;
+          el.timerStatus.textContent = t("ready");
+          el.startPauseButton.textContent = t("startTimer");
+          el.nextTaskButton.hidden = true;
+
+          updateTimerDisplay();
+          renderTasks();
+          saveToBrowser();
+        } catch {
+          alert(t("fileLoadError"));
+        } finally {
+          el.fileInput.value = "";
+        }
+      });
+
+      renderDialTicks();
+      loadFromBrowser();
+      applyLanguage();
+      updateTimerDisplay();
+    })();
+  </script>
+</body>
+</html>
