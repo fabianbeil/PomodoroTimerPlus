@@ -101,7 +101,10 @@ h1 {
   transition: transform 0.15s ease, background 0.15s ease;
 }
 
-.language-switch { white-space: nowrap; }
+.language-switch { display: flex; flex: 0 0 auto; gap: 2px; padding: 2px; border: 1px solid var(--line); border-radius: 9px; background: white; }
+.language-option { min-width: 26px; min-height: 26px; padding: 2px 3px; border: 0; border-radius: 6px; color: var(--muted); background: transparent; font-size: .65rem; font-weight: 800; }
+.language-option:hover { background: #f1efff; }
+.language-option.is-active { color: white; background: var(--accent); }
 
 .button:hover {
   transform: translateY(-1px);
@@ -148,6 +151,14 @@ h1 {
   font-size: 0.88rem;
 }
 
+.frequency-control { display: flex; align-items: center; justify-content: flex-end; gap: 14px; margin: 0 12px 8px; color: var(--muted); font-size: .82rem; font-weight: 700; }
+.frequency-value { display: flex; align-items: center; gap: 9px; }
+.frequency-value input { width: clamp(120px, 18vw, 220px); accent-color: var(--accent); }
+.frequency-value output { min-width: 3.2em; color: var(--ink); font-variant-numeric: tabular-nums; }
+.timer-panel .frequency-control { display: flex; width: min(100%, 250px); flex-direction: column; align-items: stretch; justify-content: center; gap: 5px; margin: 14px 0; text-align: left; }
+.timer-panel .frequency-value { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+.timer-panel .frequency-value input { width: 100%; }
+
 .task-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
@@ -173,7 +184,9 @@ h1 {
 .task-stack { position: relative; min-width: 0; }
 .task-stack.has-stack { padding: 34px 10px 12px; border: 2px solid #bdb8ad; border-radius: 15px; background: rgba(255,255,255,.36); }
 .task-stack.is-current-stack.has-stack { border-color: var(--accent); }
-.stack-frame-title { position: absolute; z-index: 4; top: 8px; right: 92px; left: 12px; width: auto !important; margin: 0 !important; overflow: hidden; color: #555b68; font-size: .76rem !important; font-weight: 800; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; cursor: text; }
+.task-stack.is-current-stack.has-stack { padding: 48px 20px 24px; }
+.task-stack.is-current-stack.has-stack > .task-card.is-current { transform: none; }
+.stack-frame-title { position: absolute; z-index: 4; top: 8px; right: 92px; left: 12px; width: auto !important; margin: 0 !important; overflow: hidden; color: #555b68; font-size: 1rem !important; font-weight: 800; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; cursor: text; }
 .stack-title-editor { position: absolute; z-index: 5; top: 5px; right: 88px; left: 8px; width: calc(100% - 100px); min-height: 28px; padding: 3px 6px; border: 2px solid var(--accent); border-radius: 6px; color: var(--ink); background: white; font: 700 .76rem "DM Sans", sans-serif; }
 .task-stack.is-current-stack { z-index: 5; grid-column: span 2; }
 .task-stack.has-stack > .task-card { border-bottom: 4px double rgba(39,48,67,.22); box-shadow: 0 10px 18px rgba(48,45,40,.14), 0 3px 0 rgba(80,75,70,.13); }
@@ -492,6 +505,8 @@ select:focus-visible {
   .board-heading {
     margin-top: 32px;
   }
+
+  .frequency-control { justify-content: space-between; margin: 0 0 8px; }
 
   .task-card.is-current {
     grid-column: span 1;

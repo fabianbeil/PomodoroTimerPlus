@@ -18,7 +18,11 @@
         <div class="session-actions">
           <button class="button button-secondary" id="saveSession" data-i18n="saveSession">Sitzung speichern</button>
           <button class="button button-secondary" id="loadSession" data-i18n="loadSession">Sitzung laden</button>
-          <button class="button button-secondary language-switch" id="languageToggle" type="button" aria-label="Sprache wechseln">English</button>
+          <div class="language-switch" id="languageSwitchGroup" role="group" aria-label="Sprache auswählen" data-i18n-aria="languageOptions">
+            <button type="button" class="language-option" data-language="de" aria-label="Deutsch">DE</button>
+            <button type="button" class="language-option" data-language="en" aria-label="English">EN</button>
+            <button type="button" class="language-option" data-language="fr" aria-label="Français">FR</button>
+          </div>
           <input id="fileInput" type="file" accept=".json,application/json" hidden>
         </div>
       </header>
@@ -71,11 +75,14 @@
         <input id="durationInput" type="number" min="1" max="180" value="5">
       </label>
 
+      <label class="frequency-control" for="importantFrequencyInput">
+        <span data-i18n="importantFrequency">Häufigkeit wichtiger Aufgaben</span>
+        <span class="frequency-value"><input id="importantFrequencyInput" type="range" min="0" max="75" step="1" value="50"><output id="importantFrequencyOutput">50%</output></span>
+      </label>
+
       <button class="button button-primary timer-button" id="startPauseButton" data-i18n="startTimer">Timer starten</button>
+      <button class="button button-secondary timer-button" id="restartTimerButton" data-i18n="restartTimer" hidden>Nochmal von vorne</button>
       <button class="button button-secondary timer-button" id="resetButton" data-i18n="reset">Zurücksetzen</button>
-      <button class="button button-accent timer-button" id="nextTaskButton" data-i18n="nextTask" hidden>
-        Nächste zufällige Aufgabe
-      </button>
 
       <div class="focus-card">
         <span class="focus-label" data-i18n="focusNow">JETZT IM FOKUS</span>
@@ -98,30 +105,49 @@
           saveSession: "Sitzung speichern", loadSession: "Sitzung laden", yourTasks: "Deine Aufgaben", addTask: "＋ Aufgabe hinzufügen",
           taskTitle: "Aufgabentitel", taskPlaceholder: "z. B. Angebot fertigstellen", priority: "Priorität", normal: "Normal", important: "Wichtig", pause: "Pause",
           createCard: "Karte hinzufügen", cancel: "Abbrechen", emptyState: "Noch keine Aufgaben auf deiner Pinnwand. Füge deine erste Karte hinzu.",
+          importantFrequency: "Häufigkeit wichtiger Aufgaben", restartTimer: "Nochmal von vorne",
           focusTimer: "FOKUS-TIMER", ready: "BEREIT", duration: "Dauer in Minuten", startTimer: "Timer starten", reset: "Zurücksetzen",
-          nextTask: "Nächste zufällige Aufgabe", focusNow: "JETZT IM FOKUS", noTask: "Noch keine Aufgabe", soundNote: "Nach Ablauf des Timers erklingt ein Signalton.",
+          focusNow: "JETZT IM FOKUS", noTask: "Noch keine Aufgabe", soundNote: "Nach Ablauf des Timers erklingt ein Signalton.",
           card: "Karte", cards: "Karten", titleEdit: "Titel anklicken und bearbeiten", splitFirst: "Titel des ersten Teils", splitSecond: "Titel des zweiten Teils",
           confirmEnter: "Mit Enter bestätigen", done: "Erledigt", doneTop: "Oberste Karte „{title}“ erledigen", priorityFor: "Priorität: {title}",
           moveUp: "Nach oben verschieben", moveDown: "Nach unten verschieben", timeUp: "ZEIT UM", paused: "PAUSIERT", running: "LÄUFT",
           continue: "Weiter", pauseTimer: "Pausieren", addTaskFirst: "Füge zuerst mindestens eine Aufgabe hinzu.", fileLoadError: "Die Datei konnte nicht geladen werden. Bitte wähle eine gültige Sitzungsdatei.",
-          timerAria: "Timer: {time}", switchLanguage: "Sprache wechseln"
+          timerAria: "Timer: {time}", languageOptions: "Sprache auswählen"
         },
         en: {
           boardEyebrow: "YOUR FOCUS BOARD", appTitle: "Task Pinboard", subtitle: "One task at a time. You’ve got this.",
           saveSession: "Save session", loadSession: "Load session", yourTasks: "Your tasks", addTask: "＋ Add task",
           taskTitle: "Task title", taskPlaceholder: "e.g. Finish the proposal", priority: "Priority", normal: "Normal", important: "Important", pause: "Break",
           createCard: "Add card", cancel: "Cancel", emptyState: "No tasks on your pinboard yet. Add your first card.",
+          importantFrequency: "Important task frequency", restartTimer: "Start over",
           focusTimer: "FOCUS TIMER", ready: "READY", duration: "Duration in minutes", startTimer: "Start timer", reset: "Reset",
-          nextTask: "Next random task", focusNow: "NOW IN FOCUS", noTask: "No task selected", soundNote: "An alert will sound when the timer ends.",
+          focusNow: "NOW IN FOCUS", noTask: "No task selected", soundNote: "An alert will sound when the timer ends.",
           card: "card", cards: "cards", titleEdit: "Click to edit title", splitFirst: "Title of the first part", splitSecond: "Title of the second part",
           confirmEnter: "Press Enter to confirm", done: "Done", doneTop: "Mark top card “{title}” as done", priorityFor: "Priority: {title}",
           moveUp: "Move up", moveDown: "Move down", timeUp: "TIME’S UP", paused: "PAUSED", running: "RUNNING",
           continue: "Continue", pauseTimer: "Pause", addTaskFirst: "Add at least one task first.", fileLoadError: "The file could not be loaded. Choose a valid session file.",
-          timerAria: "Timer: {time}", switchLanguage: "Switch language"
+          timerAria: "Timer: {time}", languageOptions: "Choose language"
+        },
+        fr: {
+          boardEyebrow: "VOTRE TABLEAU DE CONCENTRATION", appTitle: "Tableau des tâches", subtitle: "Une tâche à la fois. Vous pouvez le faire.",
+          saveSession: "Enregistrer la session", loadSession: "Charger une session", yourTasks: "Vos tâches", addTask: "＋ Ajouter une tâche",
+          taskTitle: "Titre de la tâche", taskPlaceholder: "ex. Terminer la proposition", priority: "Priorité", normal: "Normale", important: "Important", pause: "Pause",
+          createCard: "Ajouter la carte", cancel: "Annuler", emptyState: "Aucune tâche sur votre tableau. Ajoutez votre première carte.",
+          importantFrequency: "Fréquence des tâches importantes", restartTimer: "Recommencer",
+          focusTimer: "MINUTEUR DE CONCENTRATION", ready: "PRÊT", duration: "Durée en minutes", startTimer: "Démarrer le minuteur", reset: "Réinitialiser",
+          focusNow: "À FAIRE MAINTENANT", noTask: "Aucune tâche sélectionnée", soundNote: "Une alerte sonnera à la fin du minuteur.",
+          card: "carte", cards: "cartes", titleEdit: "Cliquer pour modifier le titre", splitFirst: "Titre de la première partie", splitSecond: "Titre de la deuxième partie",
+          confirmEnter: "Appuyez sur Entrée pour confirmer", done: "Terminé", doneTop: "Marquer la carte supérieure « {title} » comme terminée", priorityFor: "Priorité : {title}",
+          moveUp: "Déplacer vers le haut", moveDown: "Déplacer vers le bas", timeUp: "TEMPS ÉCOULÉ", paused: "EN PAUSE", running: "EN COURS",
+          continue: "Continuer", pauseTimer: "Mettre en pause", addTaskFirst: "Ajoutez d’abord au moins une tâche.", fileLoadError: "Impossible de charger le fichier. Choisissez un fichier de session valide.",
+          timerAria: "Minuteur : {time}", languageOptions: "Choisir la langue"
         }
       };
       let language = "de";
-      try { language = localStorage.getItem(LANGUAGE_KEY) === "en" ? "en" : "de"; } catch {}
+      try {
+        const savedLanguage = localStorage.getItem(LANGUAGE_KEY);
+        language = ["de", "en", "fr"].includes(savedLanguage) ? savedLanguage : "de";
+      } catch {}
       function t(key, values = {}) {
         return Object.entries(values).reduce((value, [name, replacement]) => value.replace(`{${name}}`, replacement), STRINGS[language][key] || key);
       }
@@ -137,11 +163,13 @@
         timerDisplay: document.getElementById("timerDisplay"),
         timerStatus: document.getElementById("timerStatus"),
         durationInput: document.getElementById("durationInput"),
+        importantFrequencyInput: document.getElementById("importantFrequencyInput"),
+        importantFrequencyOutput: document.getElementById("importantFrequencyOutput"),
         startPauseButton: document.getElementById("startPauseButton"),
+        restartTimerButton: document.getElementById("restartTimerButton"),
         resetButton: document.getElementById("resetButton"),
         currentTaskTitle: document.getElementById("currentTaskTitle"),
         currentTaskPriority: document.getElementById("currentTaskPriority"),
-        nextTaskButton: document.getElementById("nextTaskButton"),
         taskGrid: document.getElementById("taskGrid"),
         taskCount: document.getElementById("taskCount"),
         emptyState: document.getElementById("emptyState"),
@@ -158,6 +186,8 @@
       let intervalId = null;
       let timerRunning = false;
       let timerFinished = false;
+      let timerTaskSelected = false;
+      let importantFrequency = 50;
       let audioContext = null;
       const expandedStacks = new Set();
       let activeSplit = null;
@@ -167,7 +197,8 @@
           localStorage.setItem(STORAGE_KEY, JSON.stringify({
             tasks,
             currentTaskId,
-            duration: Number(el.durationInput.value) || 5
+            duration: Number(el.durationInput.value) || 5,
+            importantFrequency
           }));
         } catch (error) {
           console.warn("Lokales Speichern war nicht möglich.", error);
@@ -197,6 +228,12 @@
           if (Number.isFinite(duration) && duration >= 1 && duration <= 180) {
             el.durationInput.value = duration;
           }
+          const frequency = Number(saved.importantFrequency);
+          if (Number.isFinite(frequency) && frequency >= 0) {
+            importantFrequency = Math.min(75, frequency);
+            el.importantFrequencyInput.value = importantFrequency;
+          }
+          el.importantFrequencyOutput.value = `${importantFrequency}%`;
           totalSeconds = Number(el.durationInput.value) * 60;
           remainingSeconds = totalSeconds;
           saveToBrowser();
@@ -234,11 +271,11 @@
         return `${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
       }
 
-      function updateTimerDisplay() {
+      function updateTimerDisplay(forceRingUpdate = false) {
         el.timerDisplay.textContent = formatTime(remainingSeconds);
         el.timerFace.setAttribute("aria-label", t("timerAria", { time: formatTime(remainingSeconds) }));
 
-        if (remainingSeconds % 5 === 0 || remainingSeconds === totalSeconds) {
+        if (forceRingUpdate || remainingSeconds % 5 === 0 || remainingSeconds === totalSeconds) {
           const remainingMinutes = Math.min(60, remainingSeconds / 60);
           const ringColor = remainingSeconds <= 5 * 60 ? "#e6533e"
             : remainingSeconds <= 10 * 60 ? "#f1c936" : "#20a955";
@@ -288,6 +325,7 @@
           : remainingSeconds < totalSeconds ? t("paused") : t("ready");
         el.startPauseButton.textContent = timerRunning ? t("pauseTimer")
           : remainingSeconds < totalSeconds && !timerFinished ? t("continue") : t("startTimer");
+        el.restartTimerButton.hidden = !timerRunning;
       }
 
       function applyLanguage() {
@@ -296,9 +334,11 @@
         document.querySelectorAll("[data-i18n]").forEach(node => { node.textContent = t(node.dataset.i18n); });
         document.querySelectorAll("[data-i18n-placeholder]").forEach(node => { node.placeholder = t(node.dataset.i18nPlaceholder); });
         document.querySelectorAll("[data-i18n-aria]").forEach(node => { node.setAttribute("aria-label", t(node.dataset.i18nAria)); });
-        const languageToggle = document.getElementById("languageToggle");
-        languageToggle.textContent = language === "de" ? "English" : "Deutsch";
-        languageToggle.setAttribute("aria-label", t("switchLanguage"));
+        document.querySelectorAll(".language-option").forEach(button => {
+          const selected = button.dataset.language === language;
+          button.classList.toggle("is-active", selected);
+          button.setAttribute("aria-pressed", String(selected));
+        });
         renderTasks();
         updateTimerLabels();
       }
@@ -419,7 +459,12 @@
           splitButton.addEventListener("click", () => { activeSplit = { taskId: task.id, step: 1 }; renderTasks(); });
           const doneButton = document.createElement("button"); doneButton.type = "button"; doneButton.className = "delete-task"; doneButton.textContent = t("done");
           doneButton.setAttribute("aria-label", t("doneTop", { title: task.title }));
-          doneButton.addEventListener("click", () => deleteTask(task.id)); actions.append(splitButton, doneButton);
+          doneButton.addEventListener("click", () => {
+            const completedActiveTask = task.id === currentTaskId;
+            deleteTask(task.id);
+            if (completedActiveTask && !timerFinished) finishTimer();
+          });
+          actions.append(splitButton, doneButton);
           card.append(pin, title, prioritySwitch, actions); stack.appendChild(card);
           if (activeSplit && activeSplit.taskId === task.id) stack.appendChild(createSplitEditor(task));
           if (stackTasks.length > 1) {
@@ -496,7 +541,7 @@
         let pool;
 
         if (important.length && others.length) {
-          pool = Math.random() < 0.5 ? important : others;
+          pool = Math.random() * 100 < importantFrequency ? important : others;
         } else {
           pool = important.length ? important : others;
         }
@@ -549,7 +594,8 @@
         updateTimerDisplay();
         el.timerStatus.textContent = t("timeUp");
         el.startPauseButton.textContent = t("startTimer");
-        el.nextTaskButton.hidden = false;
+        el.restartTimerButton.hidden = true;
+        timerTaskSelected = false;
         playAlarm();
       }
 
@@ -558,29 +604,56 @@
           clearInterval(intervalId);
           intervalId = null;
           timerRunning = false;
+          el.restartTimerButton.hidden = true;
           el.timerStatus.textContent = t("paused");
           el.startPauseButton.textContent = t("continue");
           return;
         }
 
-        if (!timerFinished) {
+        if (timerFinished) {
           if (!chooseRandomTask()) {
             alert(t("addTaskFirst"));
             return;
           }
+          timerTaskSelected = true;
+        } else if (!timerTaskSelected) {
+          if (!chooseRandomTask()) {
+            alert(t("addTaskFirst"));
+            return;
+          }
+          timerTaskSelected = true;
         }
 
         if (timerFinished || remainingSeconds <= 0) {
           totalSeconds = Number(el.durationInput.value) * 60;
           remainingSeconds = totalSeconds;
           timerFinished = false;
-          el.nextTaskButton.hidden = true;
         }
 
         timerRunning = true;
         el.timerStatus.textContent = t("running");
         el.startPauseButton.textContent = t("pauseTimer");
+        updateTimerDisplay(true);
+        el.restartTimerButton.hidden = false;
 
+        intervalId = setInterval(() => {
+          remainingSeconds -= 1;
+          updateTimerDisplay();
+          if (remainingSeconds <= 0) finishTimer();
+        }, 1000);
+      });
+
+      el.restartTimerButton.addEventListener("click", () => {
+        if (!timerRunning) return;
+        clearInterval(intervalId);
+        totalSeconds = Number(el.durationInput.value) * 60;
+        remainingSeconds = totalSeconds;
+        timerFinished = false;
+        timerTaskSelected = true;
+        updateTimerDisplay(true);
+        el.timerStatus.textContent = t("running");
+        el.startPauseButton.textContent = t("pauseTimer");
+        el.restartTimerButton.hidden = false;
         intervalId = setInterval(() => {
           remainingSeconds -= 1;
           updateTimerDisplay();
@@ -597,7 +670,8 @@
         remainingSeconds = totalSeconds;
         el.timerStatus.textContent = t("ready");
         el.startPauseButton.textContent = t("startTimer");
-        el.nextTaskButton.hidden = true;
+        el.restartTimerButton.hidden = true;
+        timerTaskSelected = Boolean(currentTaskId);
         updateTimerDisplay();
       });
 
@@ -610,20 +684,17 @@
           remainingSeconds = totalSeconds;
           timerFinished = false;
           el.timerStatus.textContent = t("ready");
-          el.nextTaskButton.hidden = true;
+          el.restartTimerButton.hidden = true;
           updateTimerDisplay();
         }
         saveToBrowser();
       });
 
-      el.nextTaskButton.addEventListener("click", () => {
-        chooseRandomTask();
-        el.nextTaskButton.hidden = true;
-        timerFinished = false;
-        totalSeconds = Number(el.durationInput.value) * 60;
-        remainingSeconds = totalSeconds;
-        el.timerStatus.textContent = t("ready");
-        updateTimerDisplay();
+      el.importantFrequencyInput.addEventListener("input", () => {
+        importantFrequency = Math.min(75, Number(el.importantFrequencyInput.value));
+        el.importantFrequencyInput.value = importantFrequency;
+        el.importantFrequencyOutput.value = `${importantFrequency}%`;
+        saveToBrowser();
       });
 
       document.getElementById("addTaskButton").addEventListener("click", () => {
@@ -636,8 +707,10 @@
         el.taskForm.hidden = true;
       });
 
-      document.getElementById("languageToggle").addEventListener("click", () => {
-        language = language === "de" ? "en" : "de";
+      document.getElementById("languageSwitchGroup").addEventListener("click", event => {
+        const button = event.target.closest("[data-language]");
+        if (!button) return;
+        language = button.dataset.language;
         try { localStorage.setItem(LANGUAGE_KEY, language); } catch {}
         applyLanguage();
         updateTimerDisplay();
@@ -676,7 +749,8 @@
           savedAt: savedAt.toISOString(),
           tasks,
           currentTaskId,
-          duration: Number(el.durationInput.value) || 5
+          duration: Number(el.durationInput.value) || 5,
+          importantFrequency
         };
 
         const blob = new Blob([JSON.stringify(session, null, 2)], {
@@ -737,11 +811,19 @@
           intervalId = null;
           timerRunning = false;
           timerFinished = false;
+          timerTaskSelected = false;
           totalSeconds = Number(el.durationInput.value) * 60;
           remainingSeconds = totalSeconds;
           el.timerStatus.textContent = t("ready");
           el.startPauseButton.textContent = t("startTimer");
-          el.nextTaskButton.hidden = true;
+          el.restartTimerButton.hidden = true;
+
+          const frequency = Number(session.importantFrequency);
+          if (Number.isFinite(frequency) && frequency >= 0) {
+            importantFrequency = Math.min(75, frequency);
+            el.importantFrequencyInput.value = importantFrequency;
+          }
+          el.importantFrequencyOutput.value = `${importantFrequency}%`;
 
           updateTimerDisplay();
           renderTasks();
